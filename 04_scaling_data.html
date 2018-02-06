@@ -11,6 +11,10 @@
         stroke: none;
       }
 
+      rect.highlight {
+        fill: purple;
+      }
+
     </style>
   </head>
   <body>
@@ -53,7 +57,13 @@
         .attr("width", function(d) {
           return xScale(d);
         })
-        .attr("height", yScale.bandwidth());
+        .attr("height", yScale.bandwidth())
+        .on("mouseover", function() {
+          d3.select(this).classed("highlight", true);
+        })
+        .on("mouseout", function() {
+          d3.select(this).classed("highlight", false);
+        });;
 
     </script>
   </body>
