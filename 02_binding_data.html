@@ -16,29 +16,39 @@
 	<body>
 		<script type="text/javascript">
 
-			//Data
+			// Data
 			var dataset = [90, 45, 29, 88, 72, 63, 51, 35, 26, 20];
+			var dataset = Array.from({length: 15}, () => Math.floor(Math.random() * 500));
+			var dataset = dataset.sort(function (a,b) { return a - b; });
 
-			//Set size variables
+			// Select the <body> and display the data.
+			d3.select("body").append("p").text(dataset);
+
+			// Set size variables
 			var width = 500;
-			var height = 200;
-			var barHeight = 20;
+			var height = 600;
+			var barHeight = 30;
+			var barMargin = 5;
 
-			//Select the <body> and create a new SVG element
-			//with the width and height values set above.
+			// Select the <body> and create a new SVG element
+			// with the width and height values set above.
 			var svg = d3.select("body").append("svg")
 						.attr("width", width)
 						.attr("height", height);
 
-			//Create a series of 'rect' elements within the SVG,
-			//with each 'rect' referencing a corresponding data values
+			// Create a series of 'rect' elements within the SVG,
+			// with each 'rect' referencing a corresponding data values
 			svg.selectAll("rect")
 				.data(dataset)
 				.enter()
 				.append("rect")
 				.attr("x", 0)
-				.attr("y", 0)
-				.attr("width", width)
+				.attr("y", function(d, index) {
+					return index * (barHeight + barMargin);
+				})
+				.attr("width", function (d) {
+					return d;
+				})
 				.attr("height", barHeight);
 
 		</script>
