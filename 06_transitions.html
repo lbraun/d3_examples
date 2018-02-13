@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Transitions</title>
-    <script type="text/javascript" src="./node_modules/d3/build/d3.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
     <style type="text/css">
 
       rect {
@@ -26,21 +26,25 @@
       //Set size variables
       var width = 500;
       var height = 200;
+      //var barHeight = 20;  //No longer needed, thanks to ordinal yScale
 
-      //Set up scale
-      var xScale = d3.scale.linear()
-                   .domain([0, d3.max(dataset)])
-                   .range([0, width]);
+      //Set up scales
+      var xScale = d3.scaleLinear()
+        .domain([0, d3.max(dataset)])
+        .range([0, width]);
 
-      var yScale = d3.scale.ordinal()
-                 .domain(d3.range(dataset.length))
-                 .rangeRoundBands([0, height], 0.05);
+      var yScale = d3.scaleBand()
+        .domain(dataset)
+        .range([0, height])
+        .paddingInner(0.05);
+
+
 
       //Select the <body> and create a new SVG element
       //with the width and height values set above.
       var svg = d3.select("body").append("svg")
-            .attr("width", width)
-            .attr("height", height);
+        .attr("width", width)
+        .attr("height", height);
 
       //Create a series of 'rect' elements within the SVG,
       //with each 'rect' referencing a corresponding data values
@@ -50,12 +54,12 @@
         .append("rect")
         .attr("x", 0)
         .attr("y", function(d, i) {
-          return yScale(i);
+          return yScale(d);
         })
         .attr("width", function(d) {
           return xScale(d);
         })
-        .attr("height", yScale.rangeBand())
+        .attr("height", yScale.bandwidth())
         .on("mouseover", function() {
           d3.select(this).classed("highlight", true);
         })
