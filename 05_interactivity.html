@@ -29,12 +29,13 @@
 
       //Set up scales
       var xScale = d3.scale.linear()
-                   .domain([0, d3.max(dataset)])
-                   .range([0, width]);
+        .domain([0, d3.max(dataset)])
+        .range([0, width]);
 
-      var yScale = d3.scale.ordinal()
-                 .domain(d3.range(dataset.length))
-                 .rangeRoundBands([0, height], 0.05);
+      var yScale = d3.scaleBand()
+        .domain(dataset)
+        .range([0, height])
+        .paddingInner(0.05);
 
       //Select the <body> and create a new SVG element
       //with the width and height values set above.
@@ -49,13 +50,13 @@
         .enter()
         .append("rect")
         .attr("x", 0)
-        .attr("y", function(d, i) {
-          return yScale(i);
+        .attr("y", function(d) {
+          return yScale(d);
         })
         .attr("width", function(d) {
           return xScale(d);
         })
-        .attr("height", yScale.rangeBand())
+        .attr("height", yScale.bandwidth())
         .on("mouseover", function() {
           d3.select(this).classed("highlight", true);
         })

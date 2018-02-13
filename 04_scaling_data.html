@@ -52,8 +52,8 @@
         .append("rect")
         .attr("x", 0)
         .attr('y', function(d) {
-            return yScale(d);
-          })
+          return yScale(d);
+        })
         .attr("width", function(d) {
           return xScale(d);
         })
@@ -63,7 +63,7 @@
         })
         .on("mouseout", function() {
           d3.select(this).classed("highlight", false);
-        });;
+        });
 
     </script>
   </body>
