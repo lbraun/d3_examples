@@ -5,7 +5,9 @@
 		<title>D3: Loading GeoJSON data and generating SVG paths</title>
 		<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
 		<style type="text/css">
-			/* No style rules here yet */
+			path.highlight {
+			  fill: purple;
+			}
 		</style>
 	</head>
 	<body>
@@ -35,10 +37,16 @@
 
 				//Bind data and create one path per GeoJSON feature
 				svg.selectAll("path")
-				   .data(json.features)
-				   .enter()
-				   .append("path")
-				   .attr("d", path);
+					.data(json.features)
+					.enter()
+					.append("path")
+					.attr("d", path)
+					.on("mouseover", function() {
+						d3.select(this).classed("highlight", true);
+					})
+					.on("mouseout", function() {
+						d3.select(this).classed("highlight", false);
+					});
 
 			});
 
