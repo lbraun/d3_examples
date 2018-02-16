@@ -15,6 +15,15 @@
       var w = 500;
       var h = 300;
 
+      var color = d3.scale.quantize()
+        .range([
+          "rgb(237,248,233)",
+          "rgb(186,228,179)",
+          "rgb(116,196,118)",
+          "rgb(49,163,84)",
+          "rgb(0,109,44)"
+        ]);
+
       //Define map projection
       var projection = d3.geo.albersUsa()
                    .translate([w/2, h/2])
@@ -35,10 +44,22 @@
 
         //Bind data and create one path per GeoJSON feature
         svg.selectAll("path")
-           .data(json.features)
-           .enter()
-           .append("path")
-           .attr("d", path);
+          .data(json.features)
+          .enter()
+          .append("path")
+          .attr("d", path)
+          .style("fill", function(d) {
+            //Get data value
+            var value = d.properties.name;
+
+            if (value[0] == "A") {
+              //If value exists...
+              return "#00F";
+            } else {
+              //If value is undefined...
+              return "#ccc";
+            }
+          });
 
       });
 
