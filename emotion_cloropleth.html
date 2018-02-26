@@ -27,7 +27,7 @@
 
       //Define map projection
       var projection = d3.geo.equirectangular()
-        .scale([200]);
+        .scale([150]);
 
       //Define path generator
       var path = d3.geo.path()
@@ -41,8 +41,8 @@
 
       d3.json("http://emotional-apps.com/apis/meit/stats/getdata.php?test=1&gender=all&age=all&begindate=2000-01-01&enddate=2018-02-04", function(data) {
         color.domain([
-          d3.min(data, function(d) { return d.score_average; }),
-          d3.max(data, function(d) { return d.score_average; })
+          d3.min(data, function(d) { return parseFloat(d.score_average); }),
+          d3.max(data, function(d) { return parseFloat(d.score_average); })
         ]);
 
         //Load in GeoJSON data
@@ -84,7 +84,9 @@
                 //If value is undefined...
                 return "#ccc";
               }
-            });
+            })
+            .append("svg:title")
+            .text(function(d) { return d.properties.score_average; });
         });
       });
 
