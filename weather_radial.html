@@ -9,6 +9,9 @@
   <!-- Google Font -->
   <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400' rel='stylesheet' type='text/css'>
 
+  <!-- jQuery.js -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
   <style>
     body {
         font-size: 10px;
@@ -76,77 +79,99 @@
   <div id="chart"></div>
 
 <script>
-
   var DARK_SKY_KEY = "c8403cdd7a9862ddb3113c168336bde8";
-  var lat = "39.9863563";
-  var lon = "0.0513246";
-  var epoch = "1483232400";
-  var api_call = `https://api.darksky.net/forecast/${DARK_SKY_KEY}/${lat},${lon},${epoch}`;
+  var lat = "39.985977";
+  var lon = "-0.037478";
 
-  //This design is based on the amazing work of http://www.weather-radials.com/
-  //And is only meant as a nice example of how you can use an SVG gradient as a legend
+  var temperature_data_promises = [];
 
-  ///////////////////////////////////////////////////
-  //////////////// Set the Scales ///////////////////
-  ///////////////////////////////////////////////////
+  for (var i = 0; i <= 31; i++) {
+    var january_first = 1514764800;
+    var epoch = january_first + (i * 24 * 60 * 60);
+    var api_url = `https://api.darksky.net/forecast/${DARK_SKY_KEY}/`
+      + `${lat},${lon},${epoch}?units=auto`;
 
-  //Set the dimensions of the chart
-  var margin = {top: 30, right: 30, bottom: 30, left: 50},
-      width = 600 - margin.left - margin.right,
-      height = 600 - margin.top - margin.bottom;
+    var day_data = $.getJSON(api_url);
+    temperature_data_promises.push(day_data);
+  };
 
-  var parseDate = d3.time.format("%Y-%m-%d").parse;
+  Promise.all(temperature_data_promises).then(function (api_data) {
+    var temperature_data = [];
 
-  //Set the minimum inner radius and max outer radius of the chart
-  var innerRadius = 80,
-    outerRadius = 200;
+    api_data.forEach(function (api_data) {
+      var hours = api_data.hourly.data;
+      var mean_temp = hours.reduce((sum, hour) => { return sum +  hour.temperature; }, 0) / 24;
 
-  //Base the color scale on average temperature extremes
-  var colorScale = d3.scale.linear()
-    .domain([-10, 30])
-    .range(["#2c7bb6", "#d7191c"])
-    //.interpolate(d3.interpolateHcl);
+      var parsed_data = {
+        min_temp: api_data.daily.data[0].temperatureMin,
+        mean_temp: mean_temp,
+        max_temp: api_data.daily.data[0].temperatureMax,
+        date: new Date(api_data.daily.data[0].time * 1000),
+      };
 
-  //Scale for the heights of the bar, not starting at zero to give the bars an initial offset outward
-  var barScale = d3.scale.linear()
-    .range([innerRadius, outerRadius]);
+      temperature_data.push(parsed_data);
+    })
 
-  //Scale to turn the date into an angle of 360 degrees in total
-  //With the first datapoint (Jan 1st) on top
-  var angle = d3.scale.linear()
-    .range([-180, 180]);
+    build_chart(temperature_data);
+  });
 
-  ///////////////////////////////////////////////////
-  ////////////// Initialize the SVG /////////////////
-  ///////////////////////////////////////////////////
+  function build_chart(tempData) {
+    //This design is based on the amazing work of http://www.weather-radials.com/
+    //And is only meant as a nice example of how you can use an SVG gradient as a legend
 
-  //Add the svg canvas for the line chart
-  var svg = d3.select("#chart")
-      .append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-          .attr("transform", "translate(" + (margin.left + width/2) + "," + margin.top + ")");
+    ///////////////////////////////////////////////////
+    //////////////// Set the Scales ///////////////////
+    ///////////////////////////////////////////////////
 
-  //Add a title to explain the gradient
-  svg.append("text")
-    .attr("class", "title")
-    .attr("x", 0)
-    .attr("y", 0)
-    .text("2 color gradient example");
+    //Set the dimensions of the chart
+    var margin = {top: 30, right: 30, bottom: 30, left: 50},
+        width = 600 - margin.left - margin.right,
+        height = 600 - margin.top - margin.bottom;
 
-  ///////////////////////////////////////////////////
-  ///////// Create the Temperature circle ///////////
-  ///////////////////////////////////////////////////
-  d3.csv("http://pixel.uji.es/teaching/d3/weatherNY2015.csv", function(error, tempData) {
+    var parseDate = d3.time.format("%Y-%m-%d").parse;
 
-    //Turn strings into actual numbers
-    tempData.forEach(function(d) {
-      d.min_temp = +d.min_temp;
-      d.mean_temp = +d.mean_temp;
-      d.max_temp = +d.max_temp;
-      d.date = parseDate(d.date);
-    });
+    //Set the minimum inner radius and max outer radius of the chart
+    var innerRadius = 80,
+      outerRadius = 200;
+
+    //Base the color scale on average temperature extremes
+    var min_average_temperature = Math.round(d3.min(tempData, function(d) { return d.mean_temp; }));
+    var max_average_temperature = Math.round(d3.max(tempData, function(d) { return d.mean_temp; }));
+    var colorScale = d3.scale.linear()
+      .domain([min_average_temperature, max_average_temperature])
+      .range(["#2c7bb6", "#d7191c"]);
+
+    //Scale for the heights of the bar, not starting at zero to give the bars an initial offset outward
+    var barScale = d3.scale.linear()
+      .range([innerRadius, outerRadius]);
+
+    //Scale to turn the date into an angle of 360 degrees in total
+    //With the first datapoint (Jan 1st) on top
+    var angle = d3.scale.linear()
+      .range([-180, 180]);
+
+    ///////////////////////////////////////////////////
+    ////////////// Initialize the SVG /////////////////
+    ///////////////////////////////////////////////////
+
+    //Add the svg canvas for the line chart
+    var svg = d3.select("#chart")
+        .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+            .attr("transform", "translate(" + (margin.left + width/2) + "," + margin.top + ")");
+
+    //Add a title to explain the gradient
+    svg.append("text")
+      .attr("class", "title")
+      .attr("x", 0)
+      .attr("y", 0)
+      .text("2 color gradient example");
+
+    ///////////////////////////////////////////////////
+    ///////// Create the Temperature circle ///////////
+    ///////////////////////////////////////////////////
 
     //Set the bar and angle domains
     barScale.domain([d3.min(tempData, function(d) { return d.min_temp; }), d3.max(tempData, function(d) { return d.max_temp; })]);
@@ -158,7 +183,7 @@
 
     //Draw gridlines below the bars
     var axes = nineColorBarWrapper.selectAll(".gridCircles")
-      .data([-10,0,10,20,30])
+      .data([0,5,10,15,20])
       .enter().append("g");
     //Draw the circles
     axes.append("circle")
@@ -176,20 +201,20 @@
       .attr("class", "city")
       .attr("x", 0)
       .attr("y", 0)
-      .text("New York");
-    //Add subtitle for year
+      .text("Castellón");
+    //Add subtitle for month
     nineColorBarWrapper.append("text")
       .attr("class", "year")
       .attr("x", 0)
       .attr("y", 22)
-      .text("2015");
+      .text("January, 2018");
 
-    //Add January for reference
+    //Add January 1st for reference
     nineColorBarWrapper.append("text")
-      .attr("class", "january")
+      .attr("class", "first")
       .attr("x", 5)
       .attr("y", -outerRadius * 0.91)
-      .text("Jan");
+      .text("1st");
     //Add a line to split the year
     nineColorBarWrapper.append("line")
       .attr("class", "yearLine")
@@ -198,14 +223,14 @@
       .attr("x2", 0)
       .attr("y2", -outerRadius * 0.95);
 
-    //Draw a bar per day were the height is the difference between the minimum and maximum temperature
+    //Draw a bar per day where the height is the difference between the minimum and maximum temperature
     //And the color is based on the mean temperature
     nineColorBarWrapper.selectAll(".tempBar")
       .data(tempData)
       .enter().append("rect")
       .attr("class", "tempBar")
       .attr("transform", function(d,i) { return "rotate(" + (angle(d.date)) + ")"; })
-      .attr("width", 1)
+      .attr("width", 3)
       .attr("height", function(d,i) { return barScale(d.max_temp) - barScale(d.min_temp); })
       .attr("x", -0.5)
       .attr("y", function(d,i) {return barScale(d.min_temp); })
@@ -239,13 +264,13 @@
     //Create a wrapper for the legend
     var legendWrapper = svg.append("g")
       .attr("class", "legendWrapper")
-      .attr("transform", "translate(0," + (2*outerRadius + 40) + ")");
+      .attr("transform", "translate(0," + (2 * outerRadius + 40) + ")");
 
     //Data for the legend text
     var legendText = [
-      {x: -legendWidth/2, y: 30, text: "-10°C", anchor: "start"},
-      {x: 0, y: 0, text: "Average temperature on a day", anchor: "middle"},
-      {x: legendWidth/2, y: 30, text: "30°C", anchor: "end"}];
+      {x: -legendWidth/2, y: 30, text: min_average_temperature + "°C", anchor: "start"},
+      {x: 0, y: 0, text: "Average temperature", anchor: "middle"},
+      {x: legendWidth/2, y: 30, text: max_average_temperature + "°C", anchor: "end"}];
 
     //Draw the rectangle and fill with the gradient
     legendWrapper.append("rect")
@@ -267,7 +292,7 @@
       .style("text-anchor", function(d) { return d.anchor; })
       .text(function(d) { return d.text; });
 
-  });
+  };
 </script>
 
 </body>
