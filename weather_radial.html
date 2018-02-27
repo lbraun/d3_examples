@@ -40,7 +40,7 @@
       fill: #D3D3D3;
     }
 
-    .january {
+    .firstDay {
       font-size: 10px;
       text-anchor: start;
       font-weight: 300;
@@ -73,6 +73,7 @@
     }
   </style>
 
+  <title>Weather Radial</title>
 </head>
 <body>
 
@@ -82,12 +83,14 @@
   var DARK_SKY_KEY = "c8403cdd7a9862ddb3113c168336bde8";
   var lat = "39.985977";
   var lon = "-0.037478";
+  var first_day_epoch = 1514764800;
+  var number_of_days = 31;
 
   var temperature_data_promises = [];
 
-  for (var i = 0; i <= 31; i++) {
-    var january_first = 1514764800;
-    var epoch = january_first + (i * 24 * 60 * 60);
+  for (var i = 0; i < number_of_days; i++) {
+    // Calculate epoch by adding seconds to first day epoch
+    var epoch = first_day_epoch + (i * 24 * 60 * 60);
     var api_url = `https://api.darksky.net/forecast/${DARK_SKY_KEY}/`
       + `${lat},${lon},${epoch}?units=auto`;
 
@@ -167,7 +170,7 @@
       .attr("class", "title")
       .attr("x", 0)
       .attr("y", 0)
-      .text("2 color gradient example");
+      .text("Weather Radial");
 
     ///////////////////////////////////////////////////
     ///////// Create the Temperature circle ///////////
@@ -175,7 +178,7 @@
 
     //Set the bar and angle domains
     barScale.domain([d3.min(tempData, function(d) { return d.min_temp; }), d3.max(tempData, function(d) { return d.max_temp; })]);
-    angle.domain(d3.extent(tempData, function(d) { return d.date; }));
+    angle.domain([1, number_of_days + 1]);
 
     //Wrapper for the bars and to position it downward
     var nineColorBarWrapper = svg.append("g")
@@ -211,7 +214,7 @@
 
     //Add January 1st for reference
     nineColorBarWrapper.append("text")
-      .attr("class", "first")
+      .attr("class", "firstDay")
       .attr("x", 5)
       .attr("y", -outerRadius * 0.91)
       .text("1st");
@@ -229,7 +232,7 @@
       .data(tempData)
       .enter().append("rect")
       .attr("class", "tempBar")
-      .attr("transform", function(d,i) { return "rotate(" + (angle(d.date)) + ")"; })
+      .attr("transform", function(d,i) { return "rotate(" + (angle(d.date.getDate())) + ")"; })
       .attr("width", 3)
       .attr("height", function(d,i) { return barScale(d.max_temp) - barScale(d.min_temp); })
       .attr("x", -0.5)
